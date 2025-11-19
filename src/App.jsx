@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Flame, Banknote, Target, CalendarDays, Clock } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Flame, CalendarDays, Clock, Check } from "lucide-react";
 import { DateTime } from "luxon";
+import Footer from './Footer';
+import Header from './Header';
 
 const slides = [
 	{
@@ -71,9 +73,9 @@ const slides = [
 		title: "Oferta Especial",
 		subtitle: "Costo del Programa",
 		bullets: [
-			"Precio original: $400",
-			"Precio con descuento: $250",
-			"Descuento aplicado: 37.5%",
+			"Precio normal: $350",
+			"Precio con descuento: $149",
+			"Descuento aplicado: 57%",
 			"Validez de la oferta: Hasta el 21 de noviembre",
 		],
 	},
@@ -81,6 +83,7 @@ const slides = [
 
 export default function PlanDropshippingSlider() {
 	const [index, setIndex] = useState(0);
+	const [direction, setDirection] = useState(1);
 	const current = slides[index];
 
 	const isMiddleCard = index !== 0 && index !== slides.length - 1;
@@ -102,8 +105,28 @@ export default function PlanDropshippingSlider() {
 		"bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 border-amber-500/35 shadow-amber-500/15",
 	];
 
-	const next = () => setIndex((prev) => (prev + 1) % slides.length);
-	const prev = () => setIndex((prev) => (prev - 1 + slides.length) % slides.length);
+	const cardMotion = {
+		initial: (dir = 1) => ({ opacity: 0, x: 80 * dir, scale: 0.98 }),
+		animate: { opacity: 1, x: 0, scale: 1 },
+		exit: (dir = 1) => ({ opacity: 0, x: -80 * dir, scale: 0.98 }),
+	};
+
+	const goNext = () => {
+		setDirection(1);
+		setIndex((prev) => (prev + 1) % slides.length);
+	};
+
+	const goPrev = () => {
+		setDirection(-1);
+		setIndex((prev) => (prev - 1 + slides.length) % slides.length);
+	};
+
+	const goTo = (target) => {
+		const normalized = ((target % slides.length) + slides.length) % slides.length;
+		if (normalized === index) return;
+		setDirection(normalized > index ? 1 : -1);
+		setIndex(normalized);
+	};
 
 	function Countdown() {
 		const [timeLeft, setTimeLeft] = useState("Calculando...");
@@ -156,11 +179,36 @@ export default function PlanDropshippingSlider() {
 		); 
 	}
 
+	function AnimatedCard({ activeIndex, direction, children }) {
+		return (
+			<AnimatePresence mode="wait" initial={false} custom={direction}>
+				<motion.div
+					key={activeIndex}
+					variants={cardMotion}
+					custom={direction}
+					initial="initial"
+					animate="animate"
+					exit="exit"
+					transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
+					className="w-full"
+				>
+					{children}
+				</motion.div>
+			</AnimatePresence>
+		);
+	}
+
+	const layoutClasses = index === 0
+		? "flex-1 flex flex-col items-center justify-center w-full"
+		: "flex flex-col items-center w-full pt-6 sm:pt-8 lg:pt-10";
+
 	return (
-		<div className="min-h-screen bg-slate-950 px-4 py-10">
-			<div className="flex items-center justify-center min-h-[80vh]">
-				<div className="w-full max-w-4xl">
-					<div
+		<div className="min-h-screen bg-slate-950 px-4 py-6 flex flex-col">
+			{index > 0 && index < slides.length - 1 && <Header />}
+			<div className={layoutClasses}>
+				<div className="w-full max-w-4xl flex flex-col items-center gap-6 md:gap-8">
+					<AnimatedCard activeIndex={index} direction={direction}>
+						<div
 						className={`bg-slate-900 rounded-2xl p-5 sm:p-6 md:p-8 shadow-2xl border border-slate-800 ${
 							index === 0
 								? "bg-gradient-to-br from-blue-900 to-slate-900 border-blue-500 shadow-blue-500/20 text-center"
@@ -182,7 +230,7 @@ export default function PlanDropshippingSlider() {
 										PLAN INTENSIVO
 									</h3>
 									<p className="text-slate-400 text-sm mb-4">
-										Entrenamiento de 10 sesiones · 120 min c/u
+										10 sesiones · 30 - 60 min c/u
 									</p>
 									<ul className="space-y-3 mb-4">
 										<li className="flex items-start text-slate-200 text-sm md:text-base justify-center">
@@ -212,7 +260,7 @@ export default function PlanDropshippingSlider() {
 										</p>
 									</div>
 									<button
-										onClick={next}
+										onClick={() => goTo(1)}
 										className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors font-semibold"
 									>
 										Ver propuesta
@@ -247,45 +295,42 @@ export default function PlanDropshippingSlider() {
 							)}
 							{index === slides.length - 1 && (
 								<div className="text-center">
-									{/* Header destacado */}
 									<div className="flex items-center justify-center gap-2 mb-4">
 										<Flame className="text-yellow-400 w-6 h-6" />
 										<h2 className="text-white text-2xl font-bold tracking-wide">OFERTA ESPECIAL</h2>
 									</div>
-									{/* Badge descuento */}
 									<div className="mb-6">
-										<span className="inline-block bg-yellow-400 text-slate-900 font-bold px-5 py-2 rounded-md text-sm tracking-wide shadow">-37.5% OFF</span>
+										<span className="inline-block bg-yellow-400 text-slate-900 font-bold px-5 py-2 rounded-md text-sm tracking-wide shadow">-57% OFF</span>
 									</div>
-									{/* Precio hero */}
 									<div className="mb-2">
 										<div className="text-white font-extrabold text-5xl sm:text-6xl md:text-7xl">$149</div>
 									</div>
-									<p className="text-emerald-300/70 line-through text-xl mb-6">Después: $400</p>
-									{/* Bullets informativos */}
+									<p className="text-emerald-300/70 line-through text-xl mb-6">Normal: $350</p>
 									<ul className="space-y-3 text-left mb-6">
 										<li className="flex items-center text-slate-100"><Check className="text-emerald-400 w-5 h-5 mr-3" /> Acceso completo al entrenamiento</li>
 										<li className="flex items-center text-slate-100"><Check className="text-emerald-400 w-5 h-5 mr-3" /> Sesiones 100% prácticas</li>
 										<li className="flex items-center text-slate-100"><Check className="text-emerald-400 w-5 h-5 mr-3" /> 100% personalizado</li>
 									</ul>
 									<Countdown />
-									{/* CTA */}
-									<a
-										href="https://wa.me/51989843709?text=%C2%A1Quiero%20el%20entrenamiento"
-										target="_blank"
-										rel="noopener noreferrer"
-										className="mt-8 w-full py-4 rounded-full bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-slate-900 font-semibold text-lg shadow-[0_0_0_2px_rgba(16,185,129,0.6),0_0_18px_-2px_rgba(16,185,129,0.7)] hover:brightness-110 transition text-center"
-									>
-										🎁 Obtener la oferta ahora
-									</a>
-									<button
-										onClick={() => setIndex(1)}
-										className="mt-3 w-full py-3 rounded-full bg-slate-700 text-slate-200 font-medium hover:bg-slate-600 transition"
-									>
-										Volver
-									</button>
+									<div className="mt-8 flex flex-col gap-3">
+										<a
+											href="https://wa.me/51989843709?text=%C2%A1Quiero%20el%20entrenamiento"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="block w-full py-4 rounded-full bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-slate-900 font-semibold text-lg shadow-[0_0_0_2px_rgba(16,185,129,0.6),0_0_18px_-2px_rgba(16,185,129,0.7)] hover:brightness-110 transition text-center"
+										>
+											🎁 Obtener la oferta ahora
+										</a>
+										<button
+											onClick={() => goTo(1)}
+											className="w-full py-3 rounded-full bg-slate-700 text-slate-200 font-medium hover:bg-slate-600 transition"
+										>
+											Volver
+										</button>
+									</div>
 									<div className="w-full text-center mt-4">
 										<button
-											onClick={() => setIndex(0)}
+											onClick={() => goTo(0)}
 											className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
 										>
 											Decidir más tarde
@@ -297,7 +342,7 @@ export default function PlanDropshippingSlider() {
 								<div className="mt-6 flex flex-col justify-center items-center gap-4">
 									{index === 1 ? (
 										<button
-											onClick={next}
+											onClick={goNext}
 											className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors w-full"
 										>
 											Siguiente
@@ -305,16 +350,16 @@ export default function PlanDropshippingSlider() {
 									) : (
 										<>
 											<button
-												onClick={prev}
-												className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors w-full"
-											>
-												Anterior
-											</button>
-											<button
-												onClick={next}
+												onClick={goNext}
 												className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors w-full"
 											>
 												Siguiente
+											</button>
+											<button
+												onClick={goPrev}
+												className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors w-full"
+											>
+												Anterior
 											</button>
 										</>
 									)}
@@ -322,6 +367,8 @@ export default function PlanDropshippingSlider() {
 							)}
 						</div>
 					</div>
+					</AnimatedCard>
+					<Footer />
 				</div>
 			</div>
 		</div>
